@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> AI Interview Platform — deployment checklist"
+echo ""
+echo "1. Create Neon/Supabase Postgres database"
+echo "2. Copy DATABASE_URL into Vercel environment variables"
+echo "3. Set AUTH_SECRET (openssl rand -base64 32)"
+echo "4. Set AUTH_URL to your production domain"
+echo "5. Set OPENAI_API_KEY"
+echo "6. (Optional) Set AUTH_GOOGLE_ID and AUTH_GOOGLE_SECRET"
+echo ""
+echo "After first deploy, run against production DB:"
+echo "  npx prisma db push"
+echo "  npx prisma db seed"
+echo ""
+echo "Smoke test:"
+echo "  - Visit /"
+echo "  - Register or sign in with demo@interviewai.dev / password123"
+echo "  - Create a session at /sessions/new"
+echo "  - Submit an answer and verify AI feedback appears"
+echo "  - Check /dashboard for session history and scores"
