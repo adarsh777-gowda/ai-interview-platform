@@ -137,6 +137,8 @@ export default async function DashboardPage() {
                     {avg !== null ? `${avg.toFixed(1)} / 5` : "Not evaluated"}
                   </div>
                 </Link>
+
+
               );
             })
           )}
