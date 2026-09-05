@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { averageScore, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, MessageSquare, TrendingUp, Award, Target, BookOpen } from "lucide-react";
 
 function sessionAverage(turns: { scoresJson: unknown }[]) {
   const scores = turns
@@ -56,68 +57,113 @@ export default async function DashboardPage() {
     .sort((a, b) => b.average - a.average);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, {session.user.name || session.user.email}</p>
+        <div className="space-y-2">
+          <h1 className="font-serif text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Welcome back, <span className="font-semibold text-foreground">{session.user.name || session.user.email}</span>
+          </p>
         </div>
         <Link href="/sessions/new">
-          <Button>New session</Button>
+          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg">
+            <Target className="w-4 h-4 mr-2" />
+            New session
+          </Button>
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Total sessions</CardTitle>
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Calendar className="w-5 h-5 text-white" />
+            </div>
           </CardHeader>
-          <CardContent className="text-3xl font-bold">{sessions.length}</CardContent>
+          <CardContent>
+            <div className="text-3xl font-bold font-serif">{sessions.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Interview practice sessions</p>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Answers evaluated</CardTitle>
+        <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Answers Evaluated</CardTitle>
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <MessageSquare className="w-5 h-5 text-white" />
+            </div>
           </CardHeader>
-          <CardContent className="text-3xl font-bold">{evaluatedTurns.length}</CardContent>
+          <CardContent>
+            <div className="text-3xl font-bold font-serif">{evaluatedTurns.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">AI-powered feedback</p>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Average score</CardTitle>
+        <Card className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Score</CardTitle>
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Award className="w-5 h-5 text-white" />
+            </div>
           </CardHeader>
-          <CardContent className="text-3xl font-bold">
-            {overallAverage !== null ? overallAverage.toFixed(1) : "-"}
-            <span className="text-base font-normal text-muted-foreground"> / 5</span>
+          <CardContent>
+            <div className="text-3xl font-bold font-serif">
+              {overallAverage !== null ? overallAverage.toFixed(1) : "-"}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Out of 5 points</p>
           </CardContent>
         </Card>
       </div>
 
       {topicAverages.length > 0 && (
-        <Card>
+        <Card className="border-2 hover:shadow-lg transition-all duration-300">
           <CardHeader>
-            <CardTitle>Score by topic</CardTitle>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary" />
+              <CardTitle className="font-serif">Score by Topic</CardTitle>
+            </div>
             <CardDescription>Your strongest and weakest areas</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {topicAverages.map((item) => (
-              <div key={item.topic} className="flex items-center justify-between text-sm">
-                <span className="capitalize">{item.topic}</span>
-                <span>
-                  {item.average.toFixed(1)} / 5 <span className="text-muted-foreground">({item.count})</span>
-                </span>
+          <CardContent className="space-y-4">
+            {topicAverages.map((item, index) => (
+              <div key={item.topic} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="capitalize font-medium flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-muted-foreground" />
+                    {item.topic}
+                  </span>
+                  <span className="font-mono font-semibold">
+                    {item.average.toFixed(1)} / 5
+                    <span className="text-muted-foreground ml-1">({item.count})</span>
+                  </span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500"
+                    style={{ width: `${(item.average / 5) * 100}%` }}
+                  />
+                </div>
               </div>
             ))}
           </CardContent>
         </Card>
       )}
 
-      <Card>
+      <Card className="border-2 hover:shadow-lg transition-all duration-300">
         <CardHeader>
-          <CardTitle>Recent sessions</CardTitle>
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            <CardTitle className="font-serif">Recent Sessions</CardTitle>
+          </div>
           <CardDescription>Click a session to continue or review feedback</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {sessions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No sessions yet. Start your first practice run.</p>
+            <div className="text-center py-8">
+              <Target className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground">No sessions yet. Start your first practice run.</p>
+            </div>
           ) : (
             sessions.map((s) => {
               const avg = sessionAverage(s.turns);
@@ -125,20 +171,25 @@ export default async function DashboardPage() {
                 <Link
                   key={s.id}
                   href={`/sessions/${s.id}`}
-                  className="flex items-center justify-between rounded-md border p-4 transition hover:bg-muted/50"
+                  className="group flex items-center justify-between rounded-lg border-2 p-4 transition-all duration-300 hover:border-primary/50 hover:shadow-md hover:-translate-x-1"
                 >
-                  <div>
-                    <p className="font-medium">{s.role}</p>
+                  <div className="space-y-1">
+                    <p className="font-semibold text-lg group-hover:text-primary transition-colors">{s.role}</p>
                     <p className="text-sm text-muted-foreground">
-                      {s.level} - {s.topics.join(", ")} - {formatDate(s.createdAt)}
+                      {s.level} • {s.topics.join(", ")} • {formatDate(s.createdAt)}
                     </p>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {avg !== null ? `${avg.toFixed(1)} / 5` : "Not evaluated"}
+                  <div className="flex items-center gap-2">
+                    {avg !== null ? (
+                      <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 px-3 py-1 rounded-full">
+                        <Award className="w-4 h-4 text-primary" />
+                        <span className="font-mono font-semibold text-sm">{avg.toFixed(1)} / 5</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground italic">Not evaluated</span>
+                    )}
                   </div>
                 </Link>
-
-
               );
             })
           )}
