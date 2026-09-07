@@ -44,5 +44,5 @@ export async function checkRateLimit(
 }
 
 export function logAiRequest(payload: Record<string, unknown>) {
-  console.info("[ai-evaluate]", JSON.stringify(payload));
+  console.log("[ai-evaluate]", JSON.stringify(payload));
 }
