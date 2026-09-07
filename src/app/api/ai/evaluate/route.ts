@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { submitTurnSchema } from "@/lib/ai/schemas";
-import { evaluateAnswer } from "@/lib/ai/openai";
+import { evaluateAnswer, EvaluationError } from "@/lib/ai/openai";
 import { checkRateLimit, logAiRequest } from "@/lib/rate-limit";
 
 const evaluateRequestSchema = submitTurnSchema.extend({
@@ -69,7 +69,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(evaluation);
   } catch (error) {
+    const status = error instanceof EvaluationError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Evaluation failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status });
   }
 }
