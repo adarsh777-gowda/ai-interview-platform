@@ -26,7 +26,9 @@ export const createSessionSchema = z.object({
 });
 
 export const submitTurnSchema = z.object({
-  questionId: z.string().cuid(),
+  // Question IDs may be Prisma cuids OR deterministic seed IDs (e.g. `seed-javascript-TECHNICAL`),
+  // so don't enforce the cuid format here. Existence is verified against the DB in the route.
+  questionId: z.string().min(1).max(100),
   userAnswer: z.string().min(20).max(5000),
 });
 

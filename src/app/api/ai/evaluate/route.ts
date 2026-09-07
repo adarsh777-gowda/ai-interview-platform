@@ -7,7 +7,7 @@ import { evaluateAnswer } from "@/lib/ai/openai";
 import { checkRateLimit, logAiRequest } from "@/lib/rate-limit";
 
 const evaluateRequestSchema = submitTurnSchema.extend({
-  sessionId: z.string().cuid(),
+  sessionId: z.string().min(1).max(100),
 });
 
 export async function POST(request: Request) {
@@ -20,7 +20,9 @@ export async function POST(request: Request) {
   const parsed = evaluateRequestSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const message =
+      parsed.error.issues.map((issue) => issue.message).join(", ") || "Invalid request";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const interviewSession = await prisma.interviewSession.findFirst({

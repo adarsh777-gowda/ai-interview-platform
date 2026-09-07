@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluationFeedbackSchema } from "./schemas";
+import { evaluationFeedbackSchema, submitTurnSchema } from "./schemas";
 
 describe("evaluationFeedbackSchema", () => {
   it("accepts valid feedback", () => {
@@ -28,5 +28,38 @@ describe("evaluationFeedbackSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("submitTurnSchema", () => {
+  it("accepts seeded question IDs (non-cuid) and a valid answer", () => {
+    const result = submitTurnSchema.safeParse({
+      questionId: "seed-javascript-TECHNICAL",
+      userAnswer:
+        "I would start by explaining the event loop, then describe how async/await queues callbacks onto it.",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts Prisma cuid question IDs", () => {
+    const result = submitTurnSchema.safeParse({
+      questionId: "cm5l3k2abc123456789abcd",
+      userAnswer:
+        "I would start by explaining the event loop, then describe how async/await queues callbacks onto it.",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty questionId or an answer under 20 chars", () => {
+    const emptyId = submitTurnSchema.safeParse({ questionId: "", userAnswer: "x".repeat(20) });
+    const shortAnswer = submitTurnSchema.safeParse({
+      questionId: "seed-javascript-TECHNICAL",
+      userAnswer: "too short",
+    });
+
+    expect(emptyId.success).toBe(false);
+    expect(shortAnswer.success).toBe(false);
   });
 });

@@ -44,6 +44,17 @@ export function SessionInterview({
 
   const selectedQuestion = questions.find((q) => q.id === selectedQuestionId);
 
+  function formatError(error: unknown): string {
+    if (typeof error === "string") return error;
+    if (Array.isArray(error)) return error.map(formatError).join(", ");
+    if (typeof error === "object" && error) {
+      const o = error as { formErrors?: unknown; fieldErrors?: unknown; message?: unknown };
+      if (Array.isArray(o.formErrors)) return o.formErrors.map(String).join(", ");
+      if (o.message) return String(o.message);
+    }
+    return "Failed to submit answer";
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedQuestionId) return;
@@ -61,7 +72,7 @@ export function SessionInterview({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to submit answer");
+        throw new Error(formatError(data.error) || "Failed to submit answer");
       }
 
       setLocalTurns((prev) => [

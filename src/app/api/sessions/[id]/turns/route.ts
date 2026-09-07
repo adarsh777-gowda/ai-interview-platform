@@ -19,7 +19,9 @@ export async function POST(
   const parsed = submitTurnSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    const message =
+      parsed.error.issues.map((issue) => issue.message).join(", ") || "Invalid request";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const interviewSession = await prisma.interviewSession.findFirst({
