@@ -13,7 +13,7 @@ export const evaluationFeedbackSchema = z.object({
   strengths: z.array(z.string()).min(1),
   gaps: z.array(z.string()).min(1),
   suggestedAnswer: z.string().min(1),
-  followUpQuestions: z.array(z.string()).max(3),
+  followUpQuestions: z.array(z.string()),
   summary: z.string().min(1),
 });
 

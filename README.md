@@ -46,8 +46,9 @@ Required variables:
 - `OPENAI_API_KEY` - your OpenAI API key
 
 Optional:
+- `OPENAI_BASE_URL` - Base URL for an OpenAI-compatible provider (free options: Groq, Gemini, OpenRouter)
 - `SHARED_USER_EMAIL` - Custom email for shared user (defaults to `shared@interviewai.local`)
-- `OPENAI_MODEL` - OpenAI model to use (defaults to `gpt-4o-mini`)
+- `OPENAI_MODEL` - AI model to use (defaults to `gpt-4o-mini`; e.g. `llama-3.3-70b-versatile` on Groq)
 - `AI_RATE_LIMIT_MAX` - Max AI requests per window (default: 10)
 - `AI_RATE_LIMIT_WINDOW_MS` - Rate limit window in ms (default: 60000)
 
