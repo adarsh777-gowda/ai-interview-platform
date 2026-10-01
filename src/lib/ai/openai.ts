@@ -3,7 +3,10 @@ import { buildEvaluationPrompt, PROMPT_VERSION } from "./evaluationPrompt";
 import { evaluationFeedbackSchema, type EvaluationFeedback } from "./schemas";
 
 type CreateChatCompletionParams = Parameters<OpenAI["chat"]["completions"]["create"]>[0];
-type CreateChatCompletionResponse = Awaited<ReturnType<OpenAI["chat"]["completions"]["create"]>>;
+type CreateChatCompletionResponse = Extract<
+  Awaited<ReturnType<OpenAI["chat"]["completions"]["create"]>>,
+  { choices: unknown }
+>;
 
 function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -67,7 +70,7 @@ function toEvaluationError(error: unknown): EvaluationError {
   return new EvaluationError(message);
 }
 
-function extractJson(content: string): unknown {
+export function extractJson(content: string): unknown {
   const trimmed = content.trim();
   try {
     return JSON.parse(trimmed);
@@ -93,6 +96,90 @@ function isUnsupportedJsonModeError(error: unknown): boolean {
     (error.status === 400 || error.status === 422) &&
     /response_format|response format|json_object|not supported|unsupported|invalid parameter/i.test(message)
   );
+}
+
+async function createCompletion(
+  model: string,
+  messages: CreateChatCompletionParams["messages"]
+): Promise<CreateChatCompletionResponse> {
+  try {
+    return await getOpenAIClient().chat.completions.create({
+      model,
+      temperature: 0.3,
+      response_format: { type: "json_object" },
+      messages,
+    });
+  } catch (error) {
+    if (isUnsupportedJsonModeError(error)) {
+      // Free providers may reject `response_format`; retry without it.
+      return await getOpenAIClient().chat.completions.create({
+        model,
+        temperature: 0.3,
+        messages,
+      });
+    }
+    throw toEvaluationError(error);
+  }
+}
+
+export function repairFeedback(raw: unknown): EvaluationFeedback {
+  // Salvage a mostly-good model response that fails strict Zod validation,
+  // filling missing fields with safe defaults instead of failing the turn.
+  const base =
+    typeof raw === "object" && raw !== null && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  const scoresRaw =
+    typeof base.scores === "object" && base.scores !== null
+      ? (base.scores as Record<string, unknown>)
+      : {};
+
+  const clampScore = (value: unknown, fallback: number) => {
+    const n = typeof value === "number" && Number.isFinite(value) ? value : fallback;
+    return Math.min(5, Math.max(0, Math.round(n)));
+  };
+  const str = (value: unknown) => (typeof value === "string" ? value : "").trim();
+  const strArray = (value: unknown) =>
+    Array.isArray(value)
+      ? value
+          .filter((item): item is string => typeof item === "string")
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0)
+      : [];
+
+  const scores = {
+    clarity: clampScore(scoresRaw.clarity, 0),
+    structure: clampScore(scoresRaw.structure, 0),
+    correctness: clampScore(scoresRaw.correctness, 0),
+    depth: clampScore(scoresRaw.depth, 0),
+  };
+
+  const strengths = strArray(base.strengths);
+  const gaps = strArray(base.gaps);
+  const followUpQuestions = strArray(base.followUpQuestions);
+  const suggestedAnswer = str(base.suggestedAnswer);
+  const overallScore = clampScore(
+    base.overallScore,
+    Math.round((scores.clarity + scores.structure + scores.correctness + scores.depth) / 4)
+  );
+  const summary = str(base.summary);
+
+  return {
+    overallScore,
+    scores,
+    strengths:
+      strengths.length > 0 ? strengths.slice(0, 5) : ["No specific strengths were noted."],
+    gaps: gaps.length > 0 ? gaps.slice(0, 5) : ["No specific gaps were noted."],
+    suggestedAnswer:
+      suggestedAnswer.length > 0
+        ? suggestedAnswer
+        : "Review the strengths and gaps above and expand your answer with more structure and detail.",
+    followUpQuestions: followUpQuestions.slice(0, 3),
+    summary:
+      summary.length > 0
+        ? summary
+        : `The answer scored ${overallScore}/5 overall. See the strengths and gaps above for improvement areas.`,
+  };
 }
 
 export async function evaluateAnswer(params: {
@@ -122,43 +209,55 @@ export async function evaluateAnswer(params: {
     { role: "user", content: prompt },
   ];
 
-  let response: CreateChatCompletionResponse;
-  try {
-    response = await getOpenAIClient().chat.completions.create({
-      model,
-      temperature: 0.3,
-      response_format: { type: "json_object" },
-      messages,
-    });
-  } catch (error) {
-    // Free providers (e.g. some OpenRouter models) may reject `response_format`.
-    // Retry without it — the system prompt still requires strict JSON.
-    if (isUnsupportedJsonModeError(error)) {
-      response = await getOpenAIClient().chat.completions.create({
-        model,
-        temperature: 0.3,
-        messages,
-      });
-    } else {
-      throw toEvaluationError(error);
+  let response = await createCompletion(model, messages);
+  const parseFeedback = (): { ok: true; data: EvaluationFeedback } | { ok: false; issues: string[] } => {
+    const content = response.choices[0]?.message?.content;
+    if (!content) return { ok: false, issues: ["Empty response from AI provider"] };
+    let parsed: unknown;
+    try {
+      parsed = extractJson(content);
+    } catch {
+      return { ok: false, issues: ["AI response was not valid JSON"] };
     }
+    const result = evaluationFeedbackSchema.safeParse(parsed);
+    if (result.success) return { ok: true, data: result.data };
+    return { ok: false, issues: result.error.issues.map((issue) => issue.message) };
+  };
+
+  let feedbackResult = parseFeedback();
+
+  if (!feedbackResult.ok) {
+    // One corrective retry: tell the model exactly what was invalid.
+    const assistantContent = response.choices[0]?.message?.content ?? "";
+    const correctionMessages: CreateChatCompletionParams["messages"] = [
+      ...messages,
+      { role: "assistant", content: assistantContent },
+      {
+        role: "user",
+        content: `Your previous response failed validation:\n${JSON.stringify(feedbackResult.issues)}\n\nReturn ONLY valid JSON matching the requested schema exactly.`,
+      },
+    ];
+    const retryResponse = await createCompletion(model, correctionMessages);
+    response = retryResponse;
+    feedbackResult = parseFeedback();
+  }
+
+  let feedback: EvaluationFeedback;
+  if (feedbackResult.ok) {
+    feedback = feedbackResult.data;
+  } else {
+    // Last resort: salvage whatever the model returned rather than failing the turn.
+    const content = response.choices[0]?.message?.content ?? "";
+    let parsed: unknown;
+    try {
+      parsed = extractJson(content);
+    } catch {
+      parsed = {};
+    }
+    feedback = repairFeedback(parsed);
   }
 
   const latencyMs = Date.now() - started;
-  const content = response.choices[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("OpenAI returned an empty response");
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = extractJson(content);
-  } catch {
-    throw new Error("OpenAI returned invalid JSON");
-  }
-
-  const feedback = evaluationFeedbackSchema.parse(parsed);
 
   return {
     feedback,
