@@ -33,7 +33,7 @@ export default async function SessionPage({
       difficulty: interviewSession.level,
     },
     orderBy: { createdAt: "asc" },
-    take: 5,
+    take: 20,
   });
 
   const fallbackQuestions =
@@ -41,7 +41,7 @@ export default async function SessionPage({
       ? questions
       : await prisma.question.findMany({
           where: { topic: { in: interviewSession.topics } },
-          take: 5,
+          take: 20,
         });
 
   return (
@@ -61,6 +61,7 @@ export default async function SessionPage({
       <SessionInterview
         sessionId={interviewSession.id}
         questions={fallbackQuestions}
+        totalQuestions={fallbackQuestions.length}
         turns={interviewSession.turns.map((t) => ({
           id: t.id,
           questionId: t.questionId,

@@ -16,14 +16,34 @@ import {
 import { Briefcase, Target, Tag, Play, Sparkles, Check } from "lucide-react";
 
 const TOPIC_OPTIONS = [
+  // behavioral / soft skills
   "leadership",
   "conflict",
-  "javascript",
-  "arrays",
-  "scalability",
-  "databases",
   "failure",
+  "teamwork",
+  // engineering fundamentals
+  "javascript",
+  "react",
+  "css",
+  "python",
+  // algorithms & data structures
+  "arrays",
+  "strings",
   "trees",
+  "graphs",
+  "hashmaps",
+  "algorithms",
+  "recursion",
+  // backend / systems
+  "databases",
+  "sql",
+  "caching",
+  "apis",
+  "scalability",
+  "security",
+  "testing",
+  "performance",
+  "concurrency",
 ];
 
 export default function NewSessionPage() {
