@@ -36,6 +36,7 @@ model User {
   accounts          Account[]
   sessions          Session[]
   interviewSessions InterviewSession[]
+  javaProgress      JavaLabProgress[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -126,4 +127,31 @@ model RateLimitEntry {
 
   @@unique([key, windowEnd])
   @@index([key])
+}
+
+/// Per-user Java CP Lab progress, one row per problem.
+/// XP is written by /api/java/run (server-side) so it cannot be forged from
+/// the browser; `best`/`xp` are "best so far" and only ever move forward.
+model JavaLabProgress {
+  id             String   @id @default(cuid())
+  userId         String
+  problemId      String
+  solved         Boolean  @default(false)
+  /// Number of runs submitted for this problem.
+  attempts       Int      @default(0)
+  /// Best XP earned on this problem (0..problemXpCeiling).
+  xp             Int      @default(0)
+  /// Best test score across attempts, 0-100.
+  best           Int      @default(0)
+  /// True once the reference answer was revealed - blocks the No Peek badge.
+  usedSolution   Boolean  @default(false)
+  /// Fastest time-to-solve in ms; null until solved.
+  bestDurationMs Int?
+  lastRunAt      DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
+  @@index([userId])
 }

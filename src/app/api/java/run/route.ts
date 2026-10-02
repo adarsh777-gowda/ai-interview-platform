@@ -3,16 +3,66 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { checkRateLimit } from "@/lib/rate-limit";
+import { prisma } from "@/lib/prisma";
 import { findProblem, allTestsFor } from "@/lib/java/problems";
-import { executeJavaTests } from "@/lib/java/process";
+import { executeJavaTests, type JavaRunOutcome } from "@/lib/java/process";
+import type { JavaProblem } from "@/lib/java/types";
+import { dbRowToProgressRow, rowToRecord } from "@/lib/java/persist";
+import { emptyRecord } from "@/lib/java/progress";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+// Client-reported: ms since the player opened the problem. Only feeds the
+// cosmetic "Speedrunner" badge, so it is clamped rather than trusted.
+const MAX_ELAPSED_MS = 24 * 60 * 60 * 1000;
+
 const runSchema = z.object({
   problemId: z.string().min(1).max(120),
   code: z.string().min(1).max(100_000),
+  elapsedMs: z.number().min(0).max(MAX_ELAPSED_MS).optional(),
 });
+
+/**
+ * Records the run against the user's account. XP and the score come from the
+ * server's own evaluation, so they cannot be inflated from the browser.
+ * Failures are swallowed by the caller - a DB hiccup should not fail the run.
+ */
+async function persistRun(
+  userId: string,
+  problem: JavaProblem,
+  outcome: JavaRunOutcome,
+  elapsedMs?: number
+) {
+  const existing = await prisma.javaLabProgress.findUnique({
+    where: { userId_problemId: { userId, problemId: problem.id } },
+  });
+  const previous = existing ? rowToRecord(dbRowToProgressRow(existing)) : emptyRecord();
+
+  const solved = previous.solved || outcome.solved;
+  const bestDurationMs =
+    solved &&
+    typeof elapsedMs === "number" &&
+    (previous.bestDurationMs === undefined || elapsedMs < previous.bestDurationMs)
+      ? Math.trunc(elapsedMs)
+      : previous.bestDurationMs;
+
+  const data = {
+    solved,
+    attempts: previous.attempts + 1,
+    xp: Math.max(previous.xp, outcome.summary.xp),
+    best: Math.max(previous.best, outcome.summary.score),
+    usedSolution: previous.usedSolution,
+    bestDurationMs: bestDurationMs ?? null,
+    lastRunAt: new Date(),
+  };
+
+  await prisma.javaLabProgress.upsert({
+    where: { userId_problemId: { userId, problemId: problem.id } },
+    create: { userId, problemId: problem.id, ...data },
+    update: data,
+  });
+}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -50,6 +100,12 @@ export async function POST(request: Request) {
       allTestsFor(problem),
       problem.difficulty
     );
+
+    try {
+      await persistRun(session.user.id, problem, outcome, parsed.data.elapsedMs);
+    } catch (error) {
+      console.error("java run: could not persist progress", error);
+    }
 
     return NextResponse.json({
       compileError: outcome.compileError ?? null,

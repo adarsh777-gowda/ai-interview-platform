@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { JavaCategorySummary } from "@/lib/java/problems";
 import type { RunSummary } from "@/lib/java/runner";
 import { emptyRecord, type LabProgress, type LabRecord } from "@/lib/java/progress";
+import { mergeProgress } from "@/lib/java/persist";
 import { LabHud } from "./lab-hud";
 import { ProblemList } from "./problem-list";
 import { ProblemDetail } from "./problem-detail";
@@ -65,15 +66,46 @@ export function JavaLab({ categories }: { categories: JavaCategorySummary[] }) {
   const problem = flat.find((p) => p.id === selectedId) ?? flat[0];
 
   // Load saved progress once, after mount, so SSR and first client paint match.
+  // Then reconcile with the account's copy on the server: whichever side is
+  // further along wins, so switching devices never loses progress and anything
+  // saved locally before this feature is migrated up on first load.
   useEffect(() => {
     const storedSelected = readJson<string>(SELECTED_KEY, "");
-    setProgress(readJson<LabProgress>(PROGRESS_KEY, {}));
+    const local = readJson<LabProgress>(PROGRESS_KEY, {});
+    setProgress(local);
     setDrafts(readJson<Record<string, string>>(DRAFT_KEY, {}));
     setStarts(readJson<Record<string, number>>(START_KEY, {}));
     if (storedSelected && flat.some((p) => p.id === storedSelected)) {
       setSelectedId(storedSelected);
     }
     setHydrated(true);
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/java/progress");
+        if (!response.ok) return;
+        const data = (await response.json()) as { progress?: LabProgress };
+        const server = data.progress ?? {};
+        // Merge into the *current* state so a run that landed while we were
+        // fetching is never clobbered by a stale server snapshot.
+        if (!cancelled) setProgress((current) => mergeProgress(current, server));
+
+        if (Object.keys(local).length > 0) {
+          await fetch("/api/java/progress", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ progress: local }),
+          });
+        }
+      } catch {
+        // Offline or API unavailable - the lab still works from localStorage.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [flat]);
 
   // Remember which problem is open, and when it was first opened.
@@ -134,10 +166,20 @@ export function JavaLab({ categories }: { categories: JavaCategorySummary[] }) {
     setJustSolved(false);
 
     try {
+      const openedAt = starts[problem.id];
+      // Reported so the server can keep the "Speedrunner" badge across devices;
+      // clamped server-side, so it is cosmetic only.
+      const elapsedMs =
+        typeof openedAt === "number" && openedAt > 0 ? Date.now() - openedAt : undefined;
+
       const response = await fetch("/api/java/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ problemId: problem.id, code: code }),
+        body: JSON.stringify({
+          problemId: problem.id,
+          code: code,
+          ...(elapsedMs !== undefined ? { elapsedMs } : {}),
+        }),
       });
       const data = (await response.json()) as RunResponse & { error?: string };
       if (!response.ok) throw new Error(data.error || "Run failed");

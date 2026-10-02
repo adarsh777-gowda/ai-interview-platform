@@ -5,7 +5,12 @@ import { prisma } from "@/lib/prisma";
 import { averageScore, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, MessageSquare, TrendingUp, Award, Target, BookOpen } from "lucide-react";
+import { Calendar, MessageSquare, TrendingUp, Award, Target, BookOpen, Code2, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+import { JAVA_PROBLEMS } from "@/lib/java/problems";
+import { dbRowToProgressRow, rowsToProgress } from "@/lib/java/persist";
+import { computeLabLevel, solvedCount, totalXp, type LabProgress } from "@/lib/java/progress";
 
 function sessionAverage(turns: { scoresJson: unknown }[]) {
   const scores = turns
@@ -55,6 +60,30 @@ export default async function DashboardPage() {
       count: scores.length,
     }))
     .sort((a, b) => b.average - a.average);
+
+  // A missing or unreachable table degrades to an empty card rather than
+  // taking down the whole dashboard.
+  let javaProgress: LabProgress = {};
+  try {
+    const javaRows = await prisma.javaLabProgress.findMany({
+      where: { userId: session.user.id },
+      orderBy: { problemId: "asc" },
+    });
+    javaProgress = rowsToProgress(javaRows.map(dbRowToProgressRow));
+  } catch (error) {
+    console.error("dashboard: could not load java lab progress", error);
+  }
+  const javaXp = totalXp(javaProgress);
+  const javaLevel = computeLabLevel(javaXp);
+  const javaSolved = solvedCount(javaProgress);
+  const javaAttempts = Object.values(javaProgress).reduce(
+    (sum, record) => sum + record.attempts,
+    0
+  );
+  const javaPct =
+    JAVA_PROBLEMS.length > 0
+      ? Math.min(100, Math.round((javaSolved / JAVA_PROBLEMS.length) * 100))
+      : 0;
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -115,6 +144,59 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-2 hover:shadow-lg transition-all duration-300">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Code2 className="w-5 h-5 text-primary" />
+            <CardTitle className="font-serif">Java CP Lab</CardTitle>
+          </div>
+          <CardDescription>
+            {JAVA_PROBLEMS.length} problems - write, compile and run locally with your
+            own JDK
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 font-serif text-base font-bold text-white shadow-lg">
+                {javaLevel.level}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">Level {javaLevel.level}</span>
+                  <Badge variant="purple">{javaLevel.title}</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {javaXp} XP · {javaAttempts} {javaAttempts === 1 ? "run" : "runs"}
+                </p>
+              </div>
+            </div>
+            <Link href="/java">
+              <Button variant="outline" className="gap-2">
+                Open lab <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5" /> Problems solved
+              </span>
+              <span className="font-mono">
+                {javaSolved}/{JAVA_PROBLEMS.length} · {javaPct}%
+              </span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-500"
+                style={{ width: `${javaPct}%` }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {topicAverages.length > 0 && (
         <Card className="border-2 hover:shadow-lg transition-all duration-300">

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { checkRateLimit } from "@/lib/rate-limit";
+import { prisma } from "@/lib/prisma";
 import { findProblem } from "@/lib/java/problems";
 import { REFERENCE } from "@/lib/java/reference";
 
@@ -40,6 +41,20 @@ export async function POST(request: Request) {
   const rate = await checkRateLimit(`java-solution:${session.user.id}`, maxRequests, windowMs);
   if (!rate.allowed) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
+
+  // Persist the peek server-side so the No Peek badge stays blocked even if
+  // the browser never syncs (or the player switches device after revealing).
+  try {
+    await prisma.javaLabProgress.upsert({
+      where: {
+        userId_problemId: { userId: session.user.id, problemId: problem.id },
+      },
+      create: { userId: session.user.id, problemId: problem.id, usedSolution: true },
+      update: { usedSolution: true },
+    });
+  } catch (error) {
+    console.error("java solution: could not persist usedSolution", error);
   }
 
   return NextResponse.json({
