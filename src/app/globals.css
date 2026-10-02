@@ -2,6 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Keyframes live here rather than in the Tailwind config so they are always
+   shipped, even when only referenced from the plain-CSS utilities below. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes aurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(0, -26px, 0) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -21,7 +67,12 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Brand gradient stops: blue -> purple -> pink. */
+    --brand-1: 221.2 83.2% 53.3%;
+    --brand-2: 262 83% 58%;
+    --brand-3: 322 71% 55%;
   }
 
   .dark {
@@ -49,8 +100,51 @@
   * {
     @apply border-border;
   }
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    /* Fixed aurora wash so every page has depth instead of flat white. */
+    background-image:
+      radial-gradient(44rem 30rem at 6% -10%, hsl(var(--brand-1) / 0.11), transparent 62%),
+      radial-gradient(40rem 28rem at 98% -6%, hsl(var(--brand-2) / 0.11), transparent 64%),
+      radial-gradient(46rem 32rem at 50% 112%, hsl(var(--brand-3) / 0.09), transparent 60%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  ::selection {
+    background-color: hsl(var(--brand-1) / 0.2);
+    color: hsl(var(--foreground));
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.28);
+    background-clip: content-box;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+    background-clip: content-box;
   }
 }
 
@@ -59,15 +153,152 @@
     text-wrap: balance;
   }
   
-  .gradient-text {
+  .text-gradient {
     @apply bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-animated {
+    background-image: linear-gradient(
+      110deg,
+      hsl(var(--brand-1)),
+      hsl(var(--brand-2)),
+      hsl(var(--brand-3)),
+      hsl(var(--brand-1))
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: gradient-pan 9s ease-in-out infinite;
+  }
+
+  /* Staggered entrances: apply `rise-1`, `rise-2`, ... to siblings. */
+  .rise {
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .rise-1 {
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+  }
+
+  .rise-2 {
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+  }
+
+  .rise-3 {
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.19s both;
+  }
+
+  .rise-4 {
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.26s both;
+  }
+
+  .rise-5 {
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.33s both;
+  }
+
+  .rise-6 {
+    animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+  }
+
+  /* Card surface with a soft inner highlight and layered shadow. */
+  .surface {
+    border: 1px solid hsl(var(--border) / 0.8);
+    border-radius: calc(var(--radius) + 2px);
+    background-image: linear-gradient(
+      150deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--card) / 0.9) 100%
+    );
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 1px 2px rgba(15, 23, 42, 0.04),
+      0 16px 32px -24px rgba(15, 23, 42, 0.35);
+  }
+
+  .glass {
+    border: 1px solid hsl(var(--border) / 0.7);
+    background-color: hsl(var(--card) / 0.72);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  }
+
+  /* Faint blueprint grid, feathered out toward the edges. */
+  .grid-surface {
+    background-image:
+      linear-gradient(to right, hsl(var(--foreground) / 0.055) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--foreground) / 0.055) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 35%, #000 35%, transparent 100%);
+    mask-image: radial-gradient(ellipse 75% 65% at 50% 35%, #000 35%, transparent 100%);
+  }
+
+  .glow {
+    box-shadow:
+      0 0 0 1px hsl(var(--brand-1) / 0.16),
+      0 18px 44px -20px hsl(var(--brand-2) / 0.6);
+  }
+
+  .aurora {
+    animation: aurora 16s ease-in-out infinite;
+  }
+
+  /* Light sweep across a button on hover. */
+  .shine {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-130%);
+    background: linear-gradient(
+      105deg,
+      transparent 32%,
+      rgba(255, 255, 255, 0.38) 50%,
+      transparent 68%
+    );
+    transition: transform 0.7s ease;
+    pointer-events: none;
+  }
+
+  .shine:hover::after {
+    transform: translateX(130%);
   }
   
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+    @apply transition-all duration-300;
+    will-change: transform;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px);
+    border-color: hsl(var(--brand-1) / 0.35);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.6) inset,
+      0 24px 44px -26px rgba(15, 23, 42, 0.45);
   }
   
   .btn-gradient {
-    @apply bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300;
+    background-image: linear-gradient(135deg, hsl(var(--brand-1)), hsl(var(--brand-2)));
+    box-shadow: 0 12px 24px -14px hsl(var(--brand-2) / 0.95);
+    transition:
+      box-shadow 0.25s ease,
+      transform 0.25s ease,
+      filter 0.25s ease;
+  }
+
+  .btn-gradient:hover {
+    filter: brightness(1.07) saturate(1.06);
+    box-shadow: 0 18px 32px -14px hsl(var(--brand-2));
+    transform: translateY(-1px);
+  }
+
+  .btn-gradient:active {
+    transform: translateY(0);
   }
 }

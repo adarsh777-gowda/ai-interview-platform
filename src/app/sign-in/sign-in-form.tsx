@@ -53,19 +53,18 @@ export default function SignInForm() {
   return (
     <div className="mx-auto max-w-md animate-fade-in">
       <div className="mb-8 text-center">
-        <div className="flex justify-center mb-4">
-          <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-2xl opacity-20 animate-pulse-slow"></div>
-            <Sparkles className="relative w-16 h-16 text-primary" />
+        <div className="mb-5 flex justify-center">
+          <div className="grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white shadow-2xl shadow-purple-500/30">
+            <Sparkles className="h-9 w-9" />
           </div>
         </div>
-        <h1 className="font-serif text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-gradient-animated mb-2 font-serif text-3xl font-bold">
           Welcome Back
         </h1>
         <p className="text-muted-foreground">Enter the access password to continue</p>
       </div>
       
-      <Card className="border-2 shadow-xl">
+      <Card className="relative overflow-hidden border-2 bg-card/70 shadow-2xl shadow-purple-500/10 backdrop-blur">
         <CardHeader className="space-y-1">
           <CardTitle className="font-serif text-2xl flex items-center gap-2">
             <Lock className="w-5 h-5 text-primary" />
@@ -98,7 +97,7 @@ export default function SignInForm() {
             )}
             <Button 
               type="submit" 
-              className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 group" 
+              className="group h-12 w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-lg text-white shadow-lg hover:shadow-xl" 
               disabled={loading}
             >
               {loading ? (

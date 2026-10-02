@@ -1,47 +1,49 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LogOut, User } from "lucide-react";
+import { Sparkles, LogOut } from "lucide-react";
+
+const NAV_LINKS = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/sessions/new", label: "New Session" },
+  { href: "/java", label: "Java Lab" },
+];
 
 export async function Header() {
   const session = await auth();
+  const identity = session?.user?.name || session?.user?.email || "";
 
   return (
-    <header className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
+    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/70 backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-blue-500/70 to-transparent" />
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="relative">
-            <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full blur-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
-            <Sparkles className="relative w-8 h-8 text-primary group-hover:scale-110 transition-transform" />
-          </div>
-          <span className="font-serif text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <Link href="/" className="group flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/30 transition-transform duration-300 group-hover:scale-105">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <span className="text-gradient font-serif text-xl font-bold">
             InterviewAI
           </span>
         </Link>
-        <nav className="flex items-center gap-6 text-sm">
-          <Link 
-            href="/dashboard" 
-            className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:underline underline-offset-4"
-          >
-            Dashboard
-          </Link>
-          <Link 
-            href="/sessions/new" 
-            className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:underline underline-offset-4"
-          >
-            New Session
-          </Link>
-          <Link 
-            href="/java" 
-            className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:underline underline-offset-4"
-          >
-            Java Lab
-          </Link>
+        <nav className="flex items-center gap-1 text-sm">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="rounded-full px-3.5 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
           {session?.user ? (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-primary/20">
-                <User className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm">{session.user.name || session.user.email}</span>
+            <div className="flex items-center gap-2.5 pl-2">
+              <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-gradient-to-r from-blue-50 to-purple-50 py-1 pl-1 pr-3 dark:from-blue-950/30 dark:to-purple-950/30">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-[10px] font-bold uppercase text-white">
+                  {identity.charAt(0)}
+                </span>
+                <span className="max-w-[10rem] truncate text-sm font-medium">
+                  {identity}
+                </span>
               </div>
               <form
                 action={async () => {
@@ -49,26 +51,25 @@ export async function Header() {
                   await signOut({ redirectTo: "/" });
                 }}
               >
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   type="submit"
-                  className="border-2 hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive transition-all duration-300 group"
+                  className="gap-2 text-muted-foreground transition-colors hover:text-destructive"
                 >
-                  <LogOut className="w-4 h-4 mr-2 group-hover:-translate-x-0.5 transition-transform" />
+                  <LogOut className="h-4 w-4" />
                   Sign out
                 </Button>
               </form>
             </div>
           ) : (
-            <Link href="/sign-in">
-              <Button 
-                size="sm" 
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                Sign in
-              </Button>
-            </Link>
+            <Button
+              asChild
+              size="sm"
+              className="btn-gradient shine shadow-lg shadow-purple-500/25 hover:shadow-xl"
+            >
+              <Link href="/sign-in">Sign in</Link>
+            </Button>
           )}
         </nav>
       </div>
