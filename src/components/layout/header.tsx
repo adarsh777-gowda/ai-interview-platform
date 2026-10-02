@@ -31,6 +31,12 @@ export async function Header() {
           >
             New Session
           </Link>
+          <Link 
+            href="/java" 
+            className="text-muted-foreground hover:text-foreground transition-colors font-medium hover:underline underline-offset-4"
+          >
+            Java Lab
+          </Link>
           {session?.user ? (
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border border-primary/20">

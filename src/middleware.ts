@@ -23,5 +23,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/sessions/:path*"],
+  matcher: ["/dashboard/:path*", "/sessions/:path*", "/java", "/java/:path*"],
 };
