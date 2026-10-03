@@ -1,18 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { QUESTION_BANK } from "./questions";
+import { planSuperseded, seedId } from "./question-identity";
 
 const prisma = new PrismaClient();
 
-/** Stable, collision-free id: the index lets one topic/type hold several prompts. */
-function seedId(topic: string, type: string, index: number): string {
-  return `seed-${topic}-${type}-${index}`;
-}
-
 async function main() {
-  const ids = QUESTION_BANK.map((question, index) =>
-    seedId(question.topic, question.type, index)
-  );
+  const ids = QUESTION_BANK.map(seedId);
 
   // Older versions of this seed used `seed-<topic>-<type>` (no index), which
   // collapses to a single row per topic+type. Prune those, but ONLY when no turn
@@ -25,10 +19,9 @@ async function main() {
     console.log(`Removed ${stale.count} unreferenced legacy question row(s).`);
   }
 
-  for (let i = 0; i < QUESTION_BANK.length; i += 1) {
-    const question = QUESTION_BANK[i];
+  for (const question of QUESTION_BANK) {
     // Deterministic ID keeps re-seeding idempotent while allowing many questions per topic.
-    const id = seedId(question.topic, question.type, i);
+    const id = seedId(question);
     await prisma.question.upsert({
       where: { id },
       update: {
@@ -47,6 +40,26 @@ async function main() {
     });
   }
 
+  // The prune above cannot touch rows a user has actually answered, so a question
+  // that survived under an older id scheme would sit alongside its new hash twin
+  // and the same prompt would be served twice. Move those turns onto the
+  // canonical row first, then drop the now-empty duplicate.
+  const rows = await prisma.question.findMany({
+    select: { id: true, topic: true, type: true, difficulty: true, prompt: true },
+  });
+  const { repoint, remove } = planSuperseded(rows, new Set(ids));
+
+  for (const { from, to } of repoint) {
+    await prisma.interviewTurn.updateMany({
+      where: { questionId: from },
+      data: { questionId: to },
+    });
+  }
+  if (remove.length > 0) {
+    await prisma.question.deleteMany({ where: { id: { in: remove } } });
+    console.log(`Merged ${remove.length} duplicate question row(s) into their canonical id.`);
+  }
+
   const demoEmail = "demo@interviewai.dev";
   const passwordHash = await bcrypt.hash("password123", 10);
 
@@ -60,7 +73,8 @@ async function main() {
     },
   });
 
-  console.log("Seed complete:", QUESTION_BANK.length, "questions + demo user");
+  const total = await prisma.question.count();
+  console.log(`Seed complete: ${QUESTION_BANK.length} bank questions, ${total} rows in db + demo user`);
 }
 
 main()

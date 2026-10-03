@@ -139,12 +139,16 @@ export type StatsTurn = {
   topic: string;
 };
 
-export function buildSessionStats(turns: StatsTurn[], totalQuestions: number): SessionStats {
+export function buildSessionStats(
+  turns: StatsTurn[],
+  totalQuestions: number,
+  answeredCount = turns.length
+): SessionStats {
   const averages = turns.map((turn) => averageScore(turn.scoresJson));
   const depths = turns.map((turn) => turn.scoresJson?.depth ?? 0);
   const words = turns.map((turn) => countWords(turn.userAnswer));
   return {
-    answeredCount: turns.length,
+    answeredCount,
     totalQuestions,
     averages,
     topics: turns.map((turn) => turn.topic),

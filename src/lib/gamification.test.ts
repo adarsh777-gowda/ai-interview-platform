@@ -4,6 +4,7 @@ import {
   computeLevel,
   computeStreak,
   countWords,
+  buildSessionStats,
   earnedBadgeIds,
   turnXpFromScores,
   wordBonusXp,
@@ -60,6 +61,16 @@ describe("computeStreak", () => {
     expect(computeStreak([2, 4, 4, 4])).toBe(3);
     expect(computeStreak([4, 2, 4])).toBe(1);
     expect(computeStreak([])).toBe(0);
+  });
+});
+
+describe("buildSessionStats", () => {
+  it("uses the supplied unique answered count when turns repeat a question", () => {
+    const turn = { scoresJson: null, userAnswer: "answer", topic: "javascript" };
+    const stats = buildSessionStats([turn, turn], 3, 1);
+
+    expect(stats.answeredCount).toBe(1);
+    expect(stats.averages).toHaveLength(2);
   });
 });
 

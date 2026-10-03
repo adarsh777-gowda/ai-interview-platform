@@ -65,9 +65,10 @@ export function useSessionGame({
     () => localTurns.map((t) => ({ scoresJson: t.scoresJson, userAnswer: t.userAnswer, topic: t.question.topic })),
     [localTurns]
   );
+  const answered = answeredIds.size;
   const earnedIds = useMemo(
-    () => earnedBadgeIds(buildSessionStats(statsTurns, total)),
-    [statsTurns, total]
+    () => earnedBadgeIds(buildSessionStats(statsTurns, total, answered)),
+    [statsTurns, total, answered]
   );
 
   useEffect(() => {
@@ -133,7 +134,8 @@ export function useSessionGame({
 
       const nextStats = buildSessionStats(
         nextTurns.map((t) => ({ scoresJson: t.scoresJson, userAnswer: t.userAnswer, topic: t.question.topic })),
-        total
+        total,
+        updatedAnswered.size
       );
       const newBadges = earnedBadgeIds(nextStats).filter((id) => !prevEarned.has(id));
 
@@ -159,6 +161,7 @@ export function useSessionGame({
   return {
     localTurns,
     total,
+    answered,
     answeredIds,
     selectedQuestionId,
     setSelectedQuestionId,

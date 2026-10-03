@@ -21,16 +21,17 @@ export function ScoreRing({
 
   useEffect(() => {
     let frame = 0;
+    let frameId = 0;
     const frames = 24;
     const tick = () => {
       frame += 1;
       const eased = 1 - Math.pow(1 - frame / frames, 3);
       setDisplay(score * eased);
-      if (frame < frames) requestAnimationFrame(tick);
+      if (frame < frames) frameId = requestAnimationFrame(tick);
       else setDisplay(score);
     };
-    const id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
   }, [score]);
 
   const tone =
