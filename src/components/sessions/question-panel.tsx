@@ -1,11 +1,13 @@
 "use client";
 
-import { AlertCircle, Clock, Loader2, Send, Target } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, Clock, Keyboard, Loader2, Mic, Send, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { VoiceAnswerPanel } from "@/components/voice/voice-answer-panel";
 import { StructureCoach } from "./structure-coach";
 import type { Question } from "./types";
 
@@ -14,6 +16,8 @@ function formatClock(seconds: number): string {
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
+
+type AnswerMode = "type" | "voice";
 
 export function QuestionPanel({
   questions,
@@ -44,6 +48,8 @@ export function QuestionPanel({
   onToggleHints: () => void;
   answeredIds: Set<string>;
 }) {
+  const [mode, setMode] = useState<AnswerMode>("type");
+
   return (
     <Card className="h-fit">
       <CardHeader>
@@ -120,6 +126,47 @@ export function QuestionPanel({
         )}
 
         <form onSubmit={onSubmit} className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-lg bg-muted p-1">
+              <button
+                type="button"
+                onClick={() => setMode("type")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  mode === "type"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Keyboard className="h-3.5 w-3.5" /> Type
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("voice")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  mode === "voice"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Mic className="h-3.5 w-3.5" /> Voice
+              </button>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {mode === "voice"
+                ? "Speak your answer and get instant English feedback."
+                : "Or switch to voice for live English feedback."}
+            </span>
+          </div>
+
+          {mode === "voice" && selectedQuestion ? (
+            <VoiceAnswerPanel
+              prompt={selectedQuestion.prompt}
+              value={answer}
+              onChange={onAnswerChange}
+              disabled={loading}
+            />
+          ) : null}
+
           <div className="space-y-2">
             <Label htmlFor="answer">Your answer</Label>
             <Textarea
