@@ -9,8 +9,19 @@ export const DP_GRAPH_PROBLEMS: JavaProblem[] = [
     difficulty: "EASY",
     companies: ["Amazon", "Adobe", "TCS", "Wipro"],
     tags: ["Dynamic programming", "Fibonacci"],
-    prompt:
-      "Read n. You climb 1 or 2 steps at a time. Print the number of distinct ways to reach step n. n is at most 45, so use a long if you prefer.",
+    prompt: `Goal
+You are climbing a staircase and can take either 1 or 2 steps at a time. Count the number of distinct ways to reach the top.
+
+Input
+A single line containing one integer: n, the total number of steps.
+
+Output
+A single integer: the number of distinct ways to climb n steps.
+
+Constraints
+- 1 <= n <= 45
+- Step 0 is not reachable by taking steps, so treat it as having 0 ways; step 1 has 1 way.
+- The answer for n = 45 is 1836311903, which still fits in a signed 32-bit int but not in a byte or short.`,
     approach: [
       "Recursion alone is exponential because the same subproblem repeats.",
       "ways(n) = ways(n-1) + ways(n-2) - you arrive from either the last or second-last step.",
@@ -61,8 +72,23 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Amazon", "Microsoft", "Goldman Sachs", "Flipkart"],
     tags: ["Dynamic programming", "Unbounded knapsack"],
-    prompt:
-      "Read n, then n coin denominations, then an amount. Print the fewest coins needed to make the amount, or -1 if it cannot be made. Each coin may be used any number of times. If amount is 0 the answer is 0.",
+    prompt: `Goal
+You have an unlimited supply of coins of each given denomination. Work out the fewest coins needed to make a target amount exactly, or report that it is impossible.
+
+Input
+Three parts, read in this order:
+- Line 1: n, the number of distinct coin denominations.
+- Line 2: exactly n integers, the denominations, separated by spaces.
+- Line 3: amount, a single integer to make.
+
+Output
+A single integer: the fewest coins needed to make amount, or -1 when no combination works.
+
+Constraints
+- 1 <= n <= 100
+- amount >= 0, so amount 0 has the answer 0
+- Every denomination is strictly positive.
+- Greedy (always take the largest coin) is not guaranteed to work: denominations 1, 3, 4 with amount 6 need 3 + 3, not 4 + 1 + 1.`,
     approach: [
       "Greedy (always take the biggest coin) is wrong for arbitrary denominations.",
       "dp[x] = fewest coins to make x = 1 + min(dp[x - coin]) over all coins.",
@@ -118,8 +144,20 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Amazon", "Meta", "Microsoft", "Google"],
     tags: ["BFS", "DFS", "Grid"],
-    prompt:
-      "Read rows cols, then rows lines of length cols containing only '0' (water) or '1' (land). Print the number of islands, where an island is a group of 1s connected horizontally or vertically.",
+    prompt: `Goal
+Count the islands in a grid of land and water. An island is a group of land cells connected to each other horizontally or vertically.
+
+Input
+- Line 1: two integers rows and cols, separated by a space.
+- Then exactly rows lines, each containing exactly cols characters with no spaces between them. Each character is 1 for land or 0 for water.
+
+Output
+A single integer: the number of islands.
+
+Constraints
+- 1 <= rows, cols <= 300
+- Only 4-directional adjacency counts. Diagonally touching land cells belong to different islands.
+- The grid may be entirely water, in which case the answer is 0.`,
     approach: [
       "Scan every cell; the moment you see unvisited land, you found a new island.",
       "Flood fill from that cell (BFS or DFS) to mark the whole component visited.",

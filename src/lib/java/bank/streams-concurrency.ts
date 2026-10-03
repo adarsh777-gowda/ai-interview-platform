@@ -9,8 +9,21 @@ export const STREAMS_CONCURRENCY_PROBLEMS: JavaProblem[] = [
     difficulty: "HARD",
     companies: ["Amazon", "Uber", "Goldman Sachs", "Adobe"],
     tags: ["ExecutorService", "Concurrency", "Determinism"],
-    prompt:
-      "Read poolSize and taskCount. Build a fixed thread pool of poolSize threads that runs tasks 0 .. taskCount-1, where each task i reports i. Wait until every task finishes, then print all task ids ascending on one line separated by spaces. The output must be deterministic regardless of thread scheduling.",
+    prompt: `Goal
+Run a batch of numbered tasks on a fixed thread pool and print their ids in a deterministic order, so the output never depends on how the OS schedules the threads.
+
+Input
+A single line containing two integers separated by a space: poolSize and taskCount.
+
+Output
+One line containing the ids 0 to taskCount-1 in ascending order, separated by single spaces.
+
+Constraints
+- 1 <= poolSize <= 64
+- 1 <= taskCount <= 10000
+- Task i reports the id i.
+- The printed order must be submission order, not completion order, even though the tasks run concurrently.
+- You must shut the pool down, otherwise the JVM never exits and the run times out.`,
     approach: [
       "Threads have no inherent order, so never print directly from workers if the judge is strict.",
       "Submit taskCount jobs and hold on to their Future objects in submission order.",
@@ -71,8 +84,21 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Meta", "Amazon", "Bloomberg", "Swiggy"],
     tags: ["synchronized", "AtomicInteger", "Thread safety"],
-    prompt:
-      "Read threadCount and incrementsPerThread. Spawn that many threads, each incrementing a shared counter incrementsPerThread times. A naive `counter++` loses updates. Make the increments thread-safe, wait for every thread to finish, then print the final counter value.",
+    prompt: `Goal
+Fix a data race. Spawn several threads that all increment one shared counter, then print the correct final total. A plain counter++ loses updates and prints a value that is too low.
+
+Input
+A single line containing two integers separated by a space: threadCount and incrementsPerThread.
+
+Output
+A single integer: the final counter value, which must equal threadCount * incrementsPerThread exactly.
+
+Constraints
+- 1 <= threadCount <= 64
+- 1 <= incrementsPerThread <= 100000
+- The increment must be thread-safe, using either a synchronized block or an AtomicInteger.
+- You must join every thread before printing, otherwise the final read may observe a stale or partial value.
+- volatile alone is not enough: it fixes visibility but not the read-modify-write race.`,
     approach: [
       "`counter++` is three operations (read, add, write); interleaving loses increments.",
       "Two accepted fixes: a synchronized block, or an AtomicInteger with incrementAndGet().",

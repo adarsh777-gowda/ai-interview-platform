@@ -9,8 +9,19 @@ export const STRINGS_WINDOW_PROBLEMS: JavaProblem[] = [
     difficulty: "EASY",
     companies: ["Meta", "Google", "TCS", "Infosys"],
     tags: ["Stack", "Strings"],
-    prompt:
-      "Read a single line containing only the characters ( ) [ ] { }. Print true if every opening bracket is closed by the same type in the correct order, otherwise print false.",
+    prompt: `Goal
+Decide whether a string of brackets is a valid bracket sequence. A sequence is valid when every opening bracket is closed by the same type of bracket, and the closers appear in the correct nesting order.
+
+Input
+A single line containing s. Read it with nextLine so an empty line is still valid input.
+
+Output
+Print exactly true on one line when s is a valid bracket sequence, otherwise print exactly false.
+
+Constraints
+- 0 <= s.length <= 10000
+- s contains only the characters ( ) [ ] { }
+- Type and order both matter: ([)] has balanced counts but is not valid.`,
     approach: [
       "Opening brackets are 'promises'; each closing bracket must match the latest promise.",
       "A stack models 'latest promise' in O(1) time.",
@@ -60,8 +71,19 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Amazon", "Adobe", "Microsoft", "PhonePe"],
     tags: ["Sliding window", "HashMap", "Two pointers"],
-    prompt:
-      "Read a single line of characters. Print the length of the longest contiguous substring that contains no repeated character.",
+    prompt: `Goal
+Find the length of the longest substring that contains no repeated character. Substring means contiguous, so it is a window problem rather than a set-counting problem.
+
+Input
+A single line containing s, read with nextLine.
+
+Output
+A single integer: the length of the longest substring of s with no repeated character.
+
+Constraints
+- 0 <= s.length <= 200000
+- s contains no spaces and no repeated whitespace; any non-newline character is allowed
+- Print 0 for an empty string.`,
     approach: [
       "Brute force checking every substring is O(n^3); a window keeps it O(n).",
       "Keep a window [left, right] with no repeats using a last-seen index map.",
@@ -114,8 +136,21 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Amazon", "Goldman Sachs", "Nvidia", "Atlassian"],
     tags: ["Two pointers", "Greedy"],
-    prompt:
-      "Read n then n non-negative heights. Pick two lines that with the x-axis enclose the most water. Print that maximum area. The area between i and j is min(h[i], h[j]) * (j - i).",
+    prompt: `Goal
+You have n vertical lines of given heights standing side by side on the x-axis. Choose two lines that hold the most water between them and the x-axis, and print that maximum area.
+
+Input
+Two parts, read in this order:
+- Line 1: n, the number of lines.
+- Line 2: exactly n non-negative integers, the heights, separated by spaces.
+
+Output
+A single integer: the largest area that can be held.
+
+Constraints
+- 2 <= n <= 100000
+- 0 <= height[i] <= 10000
+- The area between lines i and j is min(height[i], height[j]) * (j - i), using index distance as the width.`,
     approach: [
       "Trying all pairs is O(n^2).",
       "Start with the widest pair and shrink it from the shorter side.",

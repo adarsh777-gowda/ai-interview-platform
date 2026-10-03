@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { SessionInterview } from "@/components/sessions/session-interview";
+import { pickSessionQuestions } from "@/lib/session-questions";
 import { Button } from "@/components/ui/button";
 
 export default async function SessionPage({
@@ -27,22 +28,25 @@ export default async function SessionPage({
 
   if (!interviewSession) notFound();
 
-  const questions = await prisma.question.findMany({
-    where: {
-      topic: { in: interviewSession.topics },
-      difficulty: interviewSession.level,
-    },
+  // Pull every prompt for the chosen topics (any level) and let the picker rank
+  // them. Filtering on topic + level in SQL used to return an empty list, which
+  // left the player staring at a session with no question to answer.
+  const topicPool = await prisma.question.findMany({
+    where: { topic: { in: interviewSession.topics } },
     orderBy: { createdAt: "asc" },
-    take: 20,
   });
 
-  const fallbackQuestions =
-    questions.length > 0
-      ? questions
-      : await prisma.question.findMany({
-          where: { topic: { in: interviewSession.topics } },
-          take: 20,
-        });
+  // Last resort: if the chosen topics no longer exist in the bank, borrow from
+  // the whole bank so the session is still playable.
+  const pool =
+    topicPool.length > 0
+      ? topicPool
+      : await prisma.question.findMany({ orderBy: { createdAt: "asc" } });
+
+  const questions = pickSessionQuestions(pool, {
+    topics: interviewSession.topics,
+    level: interviewSession.level,
+  });
 
   return (
     <div className="space-y-6">
@@ -60,8 +64,8 @@ export default async function SessionPage({
 
       <SessionInterview
         sessionId={interviewSession.id}
-        questions={fallbackQuestions}
-        totalQuestions={fallbackQuestions.length}
+        questions={questions}
+        totalQuestions={questions.length}
         turns={interviewSession.turns.map((t) => ({
           id: t.id,
           questionId: t.questionId,

@@ -9,8 +9,26 @@ export const DESIGN_PROBLEMS: JavaProblem[] = [
     difficulty: "MEDIUM",
     companies: ["Amazon", "Google", "Meta", "Salesforce"],
     tags: ["LinkedHashMap", "Design", "O(1)"],
-    prompt:
-      "Read capacity, then q. Then q operations of the form PUT key value or GET key. Print the results of all GET operations in order, space separated, or -1 if the key is absent. get() and put() must both run in O(1) average time; when capacity is exceeded, evict the least recently used key.",
+    prompt: `Goal
+Implement an LRU (least recently used) cache of a fixed capacity, then answer a stream of PUT and GET operations against it.
+
+Input
+- Line 1: capacity, a single integer.
+- Line 2: q, the number of operations.
+- Then exactly q lines, each one operation in one of two forms:
+  - PUT key value
+  - GET key
+where key and value are integers.
+
+Output
+One line containing the result of every GET in the order the GETs appear, separated by single spaces. A GET on an absent key produces -1. Nothing is printed for PUT operations.
+
+Constraints
+- 1 <= capacity <= 1000
+- 1 <= q <= 100000
+- Both get and put must run in O(1) average time.
+- Eviction happens only when the size would exceed capacity, so a cache holding exactly capacity keys evicts nothing.
+- Reading a key with get also counts as using it.`,
     approach: [
       "You need fast lookup AND fast recency updates: a hash map plus an ordering.",
       "The classic answer is a doubly linked list (recency order) + a HashMap.",
@@ -68,8 +86,29 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Uber", "Google", "Amazon", "Razorpay"],
     tags: ["System design", "Token bucket", "Timing"],
-    prompt:
-      "Read capacity, refillPerSec, then q, then q lines of `tokens timeMs` (requests in non-decreasing time order). The bucket starts full with `capacity` tokens and refills by ((now - lastMs) * refillPerSec) / 1000 whole tokens each request, capped at `capacity`. A request is granted (true) only if enough tokens are available; granted requests consume their tokens, rejected ones do not. lastMs is always set to now. Print one true/false per line.",
+    prompt: `Goal
+Simulate a token-bucket rate limiter and decide, for each incoming request, whether it is granted or rejected.
+
+Input
+- Line 1: two integers capacity and refillPerSec, separated by a space.
+- Line 2: q, the number of requests.
+- Then exactly q lines, each one request written as two integers: need timeMs.
+  - need is the number of tokens the request costs.
+  - timeMs is the arrival time in milliseconds. Requests arrive in non-decreasing time order.
+
+Output
+q lines, one per request in arrival order: exactly true if granted, exactly false if rejected.
+
+Constraints
+- 1 <= capacity <= 100000
+- 0 <= refillPerSec <= 100000
+- 0 <= timeMs <= 1000000000
+- The bucket starts full, so tokens begin at capacity, and lastMs begins at 0.
+- Refill uses integer division: whole tokens gained = ((now - lastMs) * refillPerSec) / 1000, truncated. Sub-second gaps therefore grant nothing.
+- The bucket is capped at capacity, so a long idle period never mints more than capacity tokens.
+- A granted request spends its tokens; a rejected one does not, but lastMs is advanced either way.
+- A request whose need is greater than capacity can never be granted.
+- Use integer arithmetic only, so results stay deterministic.`,
     approach: [
       "This is the exact algorithm behind real API gateways, so name the design.",
       "Track: tokens, capacity, refillPerSec and lastMs (the last refill timestamp).",

@@ -3,6 +3,7 @@ import { Building2, Lightbulb, Target, TriangleAlert, ListChecks } from "lucide-
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { isBulletLine, parseStatement } from "@/lib/java/statement";
 import type { ClientJavaProblem } from "@/lib/java/problems";
 import { problemXpCeiling } from "@/lib/java/progress";
 import { DIFFICULTY_BADGE, DIFFICULTY_LABEL } from "./shared";
@@ -71,9 +72,7 @@ export function ProblemDetail({ problem }: { problem: ClientJavaProblem }) {
       </CardHeader>
 
       <CardContent className="p-5">
-        {tab === "statement" && (
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">{problem.prompt}</p>
-        )}
+        {tab === "statement" && <Statement prompt={problem.prompt} />}
         {tab === "approach" && <BulletList items={problem.approach} accent="text-blue-500" />}
         {tab === "elements" && <BulletList items={problem.keyElements} accent="text-emerald-500" />}
         {tab === "pitfalls" && (
@@ -82,6 +81,60 @@ export function ProblemDetail({ problem }: { problem: ClientJavaProblem }) {
         {tab === "examples" && <ExampleList problem={problem} />}
       </CardContent>
     </Card>
+  );
+}
+
+/** Small caps label that sits above each statement section. */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+      {children}
+    </p>
+  );
+}
+
+/**
+ * Renders a problem statement as labelled Goal / Input / Output / Constraints
+ * blocks. Falls back to the raw prose for any prompt that is not in the
+ * structured format, so old content still displays correctly.
+ */
+function Statement({ prompt }: { prompt: string }) {
+  const { sections, structured } = parseStatement(prompt);
+
+  if (!structured) {
+    return <p className="whitespace-pre-wrap text-sm leading-relaxed">{prompt}</p>;
+  }
+
+  return (
+    <div className="space-y-5">
+      {sections.map((section) => {
+        const bullets = section.lines.filter(isBulletLine);
+        const prose = section.lines.filter((line) => !isBulletLine(line));
+
+        return (
+          <section key={section.name} className="space-y-2">
+            <SectionLabel>{section.name}</SectionLabel>
+
+            {prose.map((line, index) => (
+              <p key={index} className="text-sm leading-relaxed text-foreground">
+                {line}
+              </p>
+            ))}
+
+            {bullets.length > 0 && (
+              <ul className="space-y-1.5">
+                {bullets.map((line, index) => (
+                  <li key={index} className="flex gap-2.5 text-sm leading-relaxed">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    <span className="text-muted-foreground">{line.slice(2)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        );
+      })}
+    </div>
   );
 }
 

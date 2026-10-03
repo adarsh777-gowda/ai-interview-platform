@@ -9,8 +9,21 @@ export const STACKS_HEAPS_PROBLEMS: JavaProblem[] = [
     difficulty: "MEDIUM",
     companies: ["Amazon", "Meta", "Infosys", "Zoho"],
     tags: ["Monotonic stack", "Arrays"],
-    prompt:
-      "Read n then n temperatures. For each day, print how many days you must wait until a warmer temperature appears (0 if none). Print all n answers separated by spaces.",
+    prompt: `Goal
+For each day, compute how many days you must wait forward for a strictly warmer temperature to appear. If no warmer day ever comes, the answer for that day is 0.
+
+Input
+Two parts, read in this order:
+- Line 1: n, the number of days.
+- Line 2: exactly n integers, the temperatures, separated by spaces.
+
+Output
+n integers on a single line, separated by single spaces: the waiting days for each day in the same order.
+
+Constraints
+- 1 <= n <= 100000
+- 30 <= temperature[i] <= 100
+- Equal temperatures do not count as warmer, only strictly greater does.`,
     approach: [
       "Brute force scanning ahead is O(n^2).",
       "Keep a stack of indices whose next-warmer day is still unknown.",
@@ -64,8 +77,23 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Amazon", "Microsoft", "Goldman Sachs", "Uber"],
     tags: ["Heap", "Quickselect", "Arrays"],
-    prompt:
-      "Read n, then n integers, then k. Print the kth largest element (1-indexed: k=1 is the largest). Duplicates count as separate elements.",
+    prompt: `Goal
+Print the kth largest element of the array, counting k from 1 at the largest. Duplicate values count as separate elements, so no deduplication happens.
+
+Input
+Three parts, read in this order:
+- Line 1: n, the number of elements.
+- Line 2: exactly n integers, separated by spaces.
+- Line 3: k, a single integer.
+
+Output
+A single integer: the kth largest element.
+
+Constraints
+- 1 <= n <= 100000
+- 1 <= k <= n
+- Values may be negative.
+- Sorting the whole array is correct but O(n log n); the target is O(n log k).`,
     approach: [
       "Sorting the whole array works but costs O(n log n) always.",
       "A size-k min-heap keeps only the k largest: push, and pop when it grows past k.",
@@ -120,8 +148,23 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Meta", "Amazon", "Adobe", "CRED"],
     tags: ["Binary search", "Arrays"],
-    prompt:
-      "Read n, then n distinct integers that were sorted ascending then rotated, then a target. Print the index of the target, or -1 if it is not present.",
+    prompt: `Goal
+An array was sorted in ascending order and then rotated at some unknown pivot, so it now contains two ascending runs. Find the index of a target value inside it.
+
+Input
+Three parts, read in this order:
+- Line 1: n, the number of elements.
+- Line 2: exactly n distinct integers, the rotated array, separated by spaces.
+- Line 3: target, a single integer to search for.
+
+Output
+A single integer: the index of target in the array, or -1 if target is absent.
+
+Constraints
+- 1 <= n <= 100000
+- All values in the array are distinct, so there is never an index ambiguity.
+- The array was sorted ascending and rotated only once, so at most one of the two runs is out of order.
+- A rotation of 0 is allowed, so the array may already be fully sorted.`,
     approach: [
       "A rotation splits the array into two sorted halves; one half is always sorted.",
       "Run binary search and check which half is sorted.",

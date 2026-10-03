@@ -9,8 +9,23 @@ export const ARRAYS_HASHING_PROBLEMS: JavaProblem[] = [
     difficulty: "EASY",
     companies: ["Amazon", "Google", "Adobe", "Zoho"],
     tags: ["HashMap", "Arrays", "One-pass"],
-    prompt:
-      "Read n, then n integers, then a target. Print the indices of the two numbers that add up to target, in ascending order separated by a space. Exactly one solution exists and you may not use the same element twice.",
+    prompt: `Goal
+Given an array of integers nums and an integer target, print the indices of the two values that add up to target.
+
+Input
+Three parts, read in this order:
+- Line 1: n, the number of elements in nums.
+- Line 2: exactly n integers, the values of nums, separated by spaces.
+- Line 3: target, a single integer.
+
+Output
+The two indices separated by a single space, with the smaller index first.
+
+Constraints
+- 2 <= n <= 10000
+- -1000000000 <= nums[i] <= 1000000000, and likewise for target
+- Exactly one valid pair exists.
+- The same element may not be used twice.`,
     approach: [
       "Brute force is O(n^2); the interviewer expects better.",
       "For each value x you must ask: have I already seen target - x?",
@@ -66,8 +81,21 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Amazon", "Meta", "Uber", "Microsoft"],
     tags: ["HashMap", "Sorting key", "Strings"],
-    prompt:
-      "Read n then n lowercase words. Group the words that are anagrams of each other. Print one group per line: the words of a group sorted alphabetically and joined by a single space. Order the lines by the first (alphabetically smallest) word of each group.",
+    prompt: `Goal
+Group the given words so that every word sits with the other words it is an anagram of. Two words are anagrams when they contain exactly the same letters with the same counts, ignoring order.
+
+Input
+Two parts, read in this order:
+- Line 1: n, the number of words.
+- Line 2: exactly n lowercase words, separated by spaces.
+
+Output
+One group per line. Within a group the words are sorted alphabetically and joined by a single space. The lines are ordered by the first word of each group, also alphabetically.
+
+Constraints
+- 1 <= n <= 1000
+- 1 <= length of each word <= 100
+- Words contain only lowercase letters a-z.`,
     approach: [
       "Two words are anagrams iff their sorted characters are identical.",
       "That sorted string is a natural hash-map key.",
@@ -118,8 +146,21 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Amazon", "Apple", "Salesforce", "Flipkart"],
     tags: ["Prefix product", "Arrays", "No division"],
-    prompt:
-      "Read n then n integers. For each index i, compute the product of all elements except nums[i]. Print the n products separated by spaces. Do not use division and keep it O(n).",
+    prompt: `Goal
+For every index i, compute the product of all the elements of nums except nums[i] itself. Print all n results. You may not use division.
+
+Input
+Two parts, read in this order:
+- Line 1: n, the number of elements.
+- Line 2: exactly n integers, separated by spaces.
+
+Output
+n integers on a single line, separated by single spaces, in the same order as the input elements.
+
+Constraints
+- 1 <= n <= 10000
+- -100 <= nums[i] <= 100
+- Division is not allowed. Use only multiplication, so zeros are handled naturally.`,
     approach: [
       "Division is banned, so you cannot multiply everything and divide.",
       "Answer[i] = (product to the left of i) * (product to the right of i).",
@@ -172,8 +213,22 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Amazon", "Goldman Sachs", "Bloomberg", "Swiggy"],
     tags: ["Prefix sum", "HashMap", "Counting"],
-    prompt:
-      "Read n, then n integers, then k. Print the number of contiguous subarrays whose sum equals k. The array can contain negative numbers and zeros.",
+    prompt: `Goal
+Count how many contiguous subarrays of nums have a sum equal to k.
+
+Input
+Three parts, read in this order:
+- Line 1: n, the number of elements.
+- Line 2: exactly n integers, separated by spaces.
+- Line 3: k, a single integer.
+
+Output
+A single integer: the number of subarrays whose sum is exactly k.
+
+Constraints
+- 0 <= n <= 10000
+- -1000 <= nums[i] <= 1000, and likewise for k
+- The array may contain negative numbers and zeros, so a sliding window will not work.`,
     approach: [
       "Counting subarrays by brute force is O(n^2) and too slow for large n.",
       "If prefix[i] = sum of nums[0..i], then sum(i..j) = prefix[j] - prefix[i-1].",
@@ -228,8 +283,22 @@ public class Main {
     difficulty: "MEDIUM",
     companies: ["Meta", "Netflix", "Google", "CRED"],
     tags: ["HashMap", "Heap", "Bucket sort"],
-    prompt:
-      "Read n, then n integers, then k. Print the k most frequent values, most frequent first. If two values have the same frequency, print the smaller value first.",
+    prompt: `Goal
+Given an array of integers and a number k, print the k values that appear most often, ordered by frequency from highest to lowest.
+
+Input
+Three parts, read in this order:
+- Line 1: n, the number of elements.
+- Line 2: exactly n integers, separated by spaces.
+- Line 3: k, a single integer.
+
+Output
+Exactly k values on a single line, separated by single spaces, most frequent first.
+
+Constraints
+- 1 <= k <= number of distinct values, so a valid answer always exists
+- Ties are broken by printing the smaller value first.
+- The final array order of the input does not matter.`,
     approach: [
       "Count frequencies with a HashMap, then rank them.",
       "Sorting by (frequency desc, value asc) gives exactly the required order.",

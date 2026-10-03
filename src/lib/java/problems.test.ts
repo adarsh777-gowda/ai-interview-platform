@@ -11,6 +11,7 @@ import {
   toClientProblem,
 } from "./problems";
 import { extractClassName, hasMainMethod } from "./runner";
+import { hasRequiredSections, parseStatement } from "./statement";
 
 describe("problem bank", () => {
   it("ships at least 18 problems covering every category", () => {
@@ -40,6 +41,25 @@ describe("problem bank", () => {
       expect(problem.followUps.length).toBeGreaterThanOrEqual(2);
       expect(problem.companies.length).toBeGreaterThanOrEqual(3);
       expect(problem.editorial.length).toBeGreaterThan(40);
+    }
+  });
+
+  it("spells out Goal, Input and Output in every statement", () => {
+    const vague: string[] = [];
+    for (const problem of JAVA_PROBLEMS) {
+      if (!hasRequiredSections(problem.prompt)) vague.push(problem.id);
+    }
+    // A statement that does not separate its I/O contract is the failure mode
+    // this guards: players cannot tell what the program is meant to print.
+    expect(vague, `unstated I/O contract: ${vague.join(", ")}`).toEqual([]);
+  });
+
+  it("states input sizes so the data model is unambiguous", () => {
+    for (const problem of JAVA_PROBLEMS) {
+      const { sections } = parseStatement(problem.prompt);
+      const constraints = sections.find((section) => section.name === "Constraints");
+      expect(constraints, `${problem.id} has no Constraints section`).toBeDefined();
+      expect(constraints?.lines.length, `${problem.id} lists no constraints`).toBeGreaterThan(0);
     }
   });
 
